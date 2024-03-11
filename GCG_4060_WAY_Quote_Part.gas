@@ -1,0 +1,85 @@
+Program.Sub.ScreenSU.Start
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+F.Intrinsic.Control.SetErrorHandler("Main_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+V.Local.sSql.Declare(String)
+V.Local.sQuote.Declare(String)
+'Check to make sure the post load hook is being used
+F.Intrinsic.Control.If(V.Caller.Hook,=,10721)
+	'Make sure this is in open mode
+	Function.Intrinsic.Control.If(V.Caller.Switches,=,"O")
+		F.ODBC.Connection!conx.OpenConnection(V.Ambient.PDSN,V.Ambient.PUser,V.Ambient.PPass)
+		'Select the 1st part from the Quote
+		F.Intrinsic.String.LPad(V.Passed.000003,"0",7,V.Local.sQuote)
+		F.Intrinsic.String.Concat("Select Top 1 Part from v_Quote_Lines where Quote_No = '",V.Local.sQuote,"' order by Record_No",V.Local.sSql)
+		F.ODBC.Connection!conx.OpenLocalRecordsetRO("rst",V.Local.sSql)
+		'Add hidden controls to the screen
+		F.Intrinsic.Variable.SetProperty("GAB-TEXT-1","PL",115)
+		F.Intrinsic.Variable.SetProperty("GAB-TEXT-1","PT",71)
+		F.Intrinsic.Variable.SetProperty("GAB-LBL-1","PL",65)
+		F.Intrinsic.Variable.SetProperty("GAB-LBL-1","PT",71)
+		F.Intrinsic.Variable.SetProperty("GAB-LBL-1","PW",45)
+		F.Intrinsic.UI.ChangeCallerProperty(V.Passed.GAB-TEXT-1,"HIDE",0)
+		F.Intrinsic.UI.ChangeCallerProperty(V.Passed.GAB-TEXT-1,"LOCK",1)
+		F.Intrinsic.UI.ChangeCallerProperty(V.Passed.GAB-LBL-1,"HIDE",0)
+		F.Intrinsic.UI.ChangeCallerProperty(V.Passed.GAB-LBL-1,"LOCK",0)
+		'Set hidden label to WW Part
+		V.Passed.GAB-LBL-1.Set("WW Part")
+		'Make sure a part was returned and set the text box to the part number
+		F.Intrinsic.Control.If(V.ODBC.conx!rst.EOF,=,False)
+			V.Passed.GAB-TEXT-1.Set(V.ODBC.conx!rst.FieldValTrim!Part)
+		'If no part returned set text box to blank
+		F.Intrinsic.Control.Else
+			V.Passed.GAB-TEXT-1.Set("")
+		F.Intrinsic.Control.EndIf
+		F.ODBC.conx!rst.Close
+		F.ODBC.Connection!conx.Close
+		F.Intrinsic.Control.CallSub(Unload)
+	Function.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Main_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4060_WAY_Quote_Part.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.CallSub(Unload)
+Function.Intrinsic.Control.EndIf
+
+Program.Sub.Main.End
+
+Program.Sub.Unload.Start
+F.Intrinsic.Control.SetErrorHandler("Unload_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+
+F.Intrinsic.Control.End
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Unload_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4060_WAY_Quote_Part.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.End
+Function.Intrinsic.Control.EndIf
+
+Program.Sub.Unload.End
+
+Program.Sub.Comments.Start
+${$0$}$GCG_4060_WAY_Quote_Part$}$SKT$}$11/6/2014
+${$1$}$$}$$}$0$}$10721$}$QTS0200A-POST-SCREEN-LOAD-HOOK$}$5/18/2016 3:51:41 PM$}$(Program: QTE200; Screen: QTS0200A)
+
+${$3$}$0$}$$}$0$}$-1$}$$}$12:00:00 AM$}$This script will add a hidden control to the open quote header screen that will display the part on the quote.  Should only be in open mode.
+Program.Sub.Comments.End
+
